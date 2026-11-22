@@ -1,11 +1,12 @@
 English | [简体中文](README_CN.md)
+
 # EU Summon Unlock V2.7-LC (Single-CAN Mod)
 
 ### ESP32-S3 firmware for Tesla Smart Summon, TLSSC & `0x293` Auto Lane Change research
 
 > 🔀 **Fork / Modification Notice**
 >
-> This repository is a single-CAN modification based on **EU Summon Unlock V2.6.0** by **X₿mod**, incorporating the `0x293` (`UI_autoLaneChangeEnable`) overlay logic adapted from [`06066060606060/P4can-universal-unlock`](https://github.com/06066060606060/P4can-universal-unlock).
+> This repository is a single-CAN modification based on **EU Summon Unlock V2.6.0** by **X₿mod**, incorporating the `0x293` (`UI_autoLaneChangeEnable`) overlay and checksum logic adapted from [`06066060606060/P4can-universal-unlock`](https://github.com/06066060606060/P4can-universal-unlock).
 
 > ⚠️ **Research / educational firmware only**
 >
@@ -17,7 +18,7 @@ English | [简体中文](README_CN.md)
 
 ---
 
-### ⚠️ DO NOT ACTIVATE TLSSC RESTORE ON NON-BANNED CARS (instant VIN ban risk outside China)
+### ⚠️ DO NOT ACTIVATE `TLSSC RESTORE` ON NON-BANNED CARS (high risk of permanent VIN ban on overseas/non-CN servers)
 
 ---
 
@@ -29,7 +30,7 @@ English | [简体中文](README_CN.md)
 - **Live `0x293` Telemetry**: added `rx659`, `tx659`, and `raw293` status indicators to the dashboard and `/api/stats`, plus non-blocking 2-second `[STAT]` serial logging.
 - **Updated TLSSC Gate**: `0x3FD` mux0 injection (bits 38 & 39) now triggers when AP is active (`gateAPActive`) or Force Mode is enabled.
 - **Hardware Pinout**: remapped default TWAI pins for **Waveshare ESP32-S3-RS485-CAN** (`TX = 15`, `RX = 16`).
-- **UI Fix**: fixed minor CSS selector typo and reorganized Auto Lane Change settings into a dedicated card.
+- **UI Fix**: fixed minor CSS selector typo and reorganized Auto Lane Change & blindspot settings into a dedicated card.
 
 ### V2.6.0 (Upstream)
 - Includes an updated summon logic for much better stability (500 ms periodic echo).
@@ -42,7 +43,7 @@ English | [简体中文](README_CN.md)
 - Expand Summon range to **±85 m**.
 - Expanded lateral acceleration limits.
 - **Auto Lane Change (`0x293` overlay)** on single Chassis CAN:
-  - Note: Without a second CAN bus (Party CAN nag-killer), standard hands-on steering wheel torque confirmation is still required during lane changes.
+  - *Note*: Without a second CAN bus (Party CAN nag-killer), standard hands-on steering wheel torque confirmation is still required during lane changes.
 - Blindspot aggressiveness settings during lane change (`STANDARD` / `AGGRESSIVE` / `MAD_MAX` on `0x3F8`).
 - Toggle to activate **TLSSC** (Traffic Light & Stop Sign Control) & **Continue on Green with CIPV** (`0x3FD` mux0 bits 38, 39).
 - **TLSSC Restore** (`0x331`) for already-banned vehicles only.
@@ -69,7 +70,10 @@ Blindspot    (0x3F8)      : APActive && stock value != selected mode
 |---|---|
 | AP Injection | Does not work before **2026.20** |
 | Upstream confirmed | **2026.26.1** (Model Y HW4) |
-| V2.7-LC tested on | **2021 Model 3 SR+ (Intel / HW3)** — Chassis CAN (X179 pins 13 & 14) |
+| V2.7-LC tested on | **2021 Model 3 SR+ (Intel / HW3, RHD)** — Chassis CAN (X179 pins 13 & 14) |
+| Drive Side & Models | **Compatible with both LHD and RHD standard Model 3 / Model Y** *(not compatible with China-specific **Model Y L**, which uses a different bus topology)* |
+
+> 💡 **Regional Firmware Note**: China-region (CN) firmware branches differ from overseas builds in TLSSC map dependencies and regulatory behavior; actual feature availability may vary by region and software version.
 
 ---
 
@@ -79,8 +83,8 @@ Blindspot    (0x3F8)      : APActive && stock value != selected mode
 
 - **ESP32 / ESP32-S3** — any variant with a TWAI/CAN peripheral (e.g., **Waveshare ESP32-S3-RS485-CAN** or M5Stack Atom S3 Lite + CAN Base).
 - **CAN transceiver** — onboard or external (e.g., SN65HVD230 / MCP2562 / TJA1051).
-- Wired to the **Chassis CAN bus** (500 kbps):
-  - Typically at the **X179 connector, pins 13 & 14**.
+- Wired inline to the **Chassis CAN bus** (500 kbps):
+  - On 2021+ models, typically at the **X179 connector, pins 13 & 14** (located behind the passenger-side A-pillar kick panel: right side on LHD, left side on RHD; earlier 2019–2020 models are usually below the rear center console).
 
 ### Pin Defaults — Waveshare ESP32-S3-RS485-CAN
 
@@ -89,13 +93,13 @@ Blindspot    (0x3F8)      : APActive && stock value != selected mode
 #define CAN_RX_PIN  16
 ```
 
-*(For M5Stack Atom S3 Lite with CAN Base, change these back to `TX = 5`, `RX = 6`.)*
+*(For M5Stack Atom S3 Lite with CAN Base, change these back to `TX = 5`, `RX = 6` in `src/summon_unlock.ino`.)*
 
 ---
 
 ## 🌐 Wi-Fi Dashboard
 
-After boot, the ESP32 creates a Wi-Fi access point.
+After boot, the ESP32 creates a Wi-Fi access point:
 
 | Parameter | Value |
 |---|---|
@@ -110,23 +114,23 @@ After boot, the ESP32 creates a Wi-Fi access point.
 - **Auto Lane Change**: Independent toggle for `0x293` overlay and `0x3F8` blindspot aggressiveness (`STANDARD` / `AGGRESSIVE` / `MAD_MAX`).
 - **Injection Gate**: Real-time state of `Gate`, `APActive`, `Parked`, and `Summoning`.
 - **Live**: Per-ID RX counters (`280`, `390`, `921`, `1016`, `659`, `1021 mux1`), `0x293` TX counter (`tx659`) and raw value (`raw293`), total `TX ok / fail`, CAN bus state, and uptime.
-- **OTA Update**: Upload compiled `.bin` files directly from the browser.
+- **Firmware / OTA Update**: Upload compiled `.bin` files directly from the browser.
 
 ---
 
 ## 🔌 REST API
 
 ```text
-GET  /api/stats          → JSON snapshot of all state and counters
-POST /api/enable         → Enable Summon injection (persisted to NVS)
-POST /api/disable        → Disable Summon injection (persisted to NVS)
-POST /api/tlssc-enable   → Enable TLSSC (0x3FD mux0)
-POST /api/tlssc-disable  → Disable TLSSC
-POST /api/lc-enable      → Enable Auto Lane Change (0x293)
-POST /api/lc-disable     → Disable Auto Lane Change
+GET  /api/stats                → JSON snapshot of all state and counters
+POST /api/enable               → Enable Summon injection (persisted to NVS)
+POST /api/disable              → Disable Summon injection (persisted to NVS)
+POST /api/tlssc-enable         → Enable TLSSC (0x3FD mux0)
+POST /api/tlssc-disable        → Disable TLSSC
+POST /api/lc-enable            → Enable Auto Lane Change (0x293)
+POST /api/lc-disable           → Disable Auto Lane Change
 POST /api/blindspot?mode=0|1|2 → Set 0x3F8 mode (0=STANDARD, 1=AGGRESSIVE, 2=MAD_MAX)
-POST /api/forcemode      → Toggle Force Mode
-POST /update             → Upload .bin firmware for OTA update
+POST /api/forcemode            → Toggle Force Mode
+POST /update                   → Upload .bin firmware for OTA update
 ```
 
 ---
@@ -145,16 +149,20 @@ POST /update             → Upload .bin firmware for OTA update
 
 ---
 
-## 📦 Build Firmware for OTA
+## 📦 Build & Flash
 
-For the first flash via Arduino IDE (or PlatformIO):
-- Partition Scheme: `Default 4MB with spiffs (1.2MB APP / 1.5MB SPIFFS)` (or any OTA-capable scheme matching your board's flash size).
+### Option 1: VS Code + PlatformIO (Recommended)
+This repository already includes `platformio.ini` and the `src/` layout:
+1. Open the repository root folder in **VS Code** with the **PlatformIO** extension installed.
+2. **First flash (USB)**: Connect the board via USB and click **Upload** (`→`) on the bottom status bar.
+3. **Export OTA binary**: Click **Build** (`✓`). Locate `firmware.bin` inside `.pio/build/<board_env>/`, then upload it via `http://192.168.4.1` under **Firmware / OTA Update**.
 
-1. Open the sketch in Arduino IDE / VS Code.
-2. Select **Sketch → Export Compiled Binary**.
-3. Locate the generated `.bin` file in the build output folder.
-4. Connect to the ESP32 Wi-Fi AP and open `http://192.168.4.1`.
-5. Upload the `.bin` file under **Firmware / OTA Update**.
+### Option 2: Arduino IDE
+1. Create a local folder named `summon_unlock` and copy both `src/summon_unlock.ino` and `src/index_html.h` into it.
+2. Select an OTA-capable Partition Scheme (e.g. `Default 4MB with spiffs (1.2MB APP / 1.5MB SPIFFS)` or one matching your board's flash size).
+3. Flash via USB for the first install; for subsequent OTA updates, use **Sketch → Export Compiled Binary** and upload the `.bin` via the web dashboard.
+
+> ℹ️ If pre-compiled `.bin` binaries are provided under **Releases**, note that they are built specifically for **ESP32-S3 (`TX = 15`, `RX = 16`)** and are intended for **Web OTA updates** on already-flashed devices (a fresh blank board still requires an initial USB flash for bootloader & partition table).
 
 ---
 
@@ -205,5 +213,4 @@ Licensed under the **GNU General Public License v3.0 or later (GPL-3.0-or-later)
 
 ## 📸 Dashboard
 
-<!-- 建议替换为你的 V2.7-LC 网页截图 -->
 <img width="260" alt="V2.7-LC Dashboard" src="dashboard.png" />
