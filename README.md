@@ -206,4 +206,4 @@ Licensed under the **GNU General Public License v3.0 or later (GPL-3.0-or-later)
 ## 📸 Dashboard
 
 <!-- 建议替换为你的 V2.7-LC 网页截图 -->
-<img width="260" alt="V2.7-LC Dashboard" src="192.168.4.1_.png" />
+<img width="260" alt="V2.7-LC Dashboard" src="dashboard.png" />
