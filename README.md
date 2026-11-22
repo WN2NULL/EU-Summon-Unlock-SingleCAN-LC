@@ -205,4 +205,4 @@ Licensed under the **GNU General Public License v3.0 or later (GPL-3.0-or-later)
 ## 📸 Dashboard
 
 <!-- 建议替换为你的 V2.7-LC 网页截图 -->
-<img width="230" height="551" alt="Summon Unlock Dashboard" src="https://github.com/user-attachments/assets/d8c8b306-8155-48e1-bacd-6af79aef1c88" />
+<img width="230" height="551" alt="Summon Unlock Dashboard" src="dashboard.png" />
