@@ -1,3 +1,4 @@
+English | [简体中文](README_CN.md)
 # EU Summon Unlock V2.7-LC (Single-CAN Mod)
 
 ### ESP32-S3 firmware for Tesla Smart Summon, TLSSC & `0x293` Auto Lane Change research
